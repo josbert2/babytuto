@@ -1,4 +1,4 @@
-import pandas as pd
+
 import mysql.connector as mysql
 
 from selenium.webdriver.chrome.options import Options
