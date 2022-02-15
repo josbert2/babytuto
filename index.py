@@ -1,4 +1,4 @@
-import pandas as pd
+
 import mysql.connector as mysql
 import openpyxl
 from selenium.webdriver.chrome.options import Options
