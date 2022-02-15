@@ -1,6 +1,6 @@
 import pandas as pd
 import mysql.connector as mysql
-
+import openpyxl
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 from selenium import webdriver
@@ -15,25 +15,26 @@ import requests
 import urllib.request
 
 from  bs4 import BeautifulSoup
-
+import xlrd
 
 
 #Variables
 
-NOMBRES = []
-URLS = []
-DESCRIPTION = []
-MARCAS = []
-PRECIOS = []
-PRECIOOFERTA = []
-CATEGORIA = []
-VALORACIONES = []
-STOCKONLINE = []
-STOCKBODEGA = []
-IMAGENPRINCIPAL = []
-IMAGENES = []
-TAGBABYFLASH = []
-TAGBESTSELLER = []
+NOMBRES = [] #✔
+URLS = [] #✔
+DESCRIPTION = [] #✔
+MARCAS = [] #✔
+PRECIOS = [] #✔
+PRECIOOFERTA = [] #✔
+CATEGORIA = [] #✔
+CATEGORIA_PRINCIPAL = [] #✔
+VALORACIONES = [] #✔
+STOCKONLINE = [] #✔
+STOCKBODEGA = [] #✔
+IMAGENPRINCIPAL = [] #✔
+IMAGENES = [] #X
+TAGBABYFLASH = [] #✔
+TAGBESTSELLER = [] #✔
 DESPACHOGRATIS = []
 
 def checkElement(el):
@@ -55,142 +56,259 @@ db = mysql.connect(
     database="babytuto"
 )
 
-URL = 'https://www.babytuto.com/productos/paseo-sillas-para-auto-butacas,silla-combinada-modelo-nautilus-sully-graco,207205?bt_f=home-hot&gclid=Cj0KCQiAmKiQBhClARIsAKtSj-nBhf9ZfbjUR7mcGvHm5_gMQo_aOQHqx7dSFMS8zH1ZiikQR1DYDf8aAqCsEALw_wcB'
-URL = 'https://www.babytuto.com/productos/,89166?bt_f=retailRocket'
-URL = 'https://www.babytuto.com/productos/,201388?bt_f=retailRocket'
-URL = 'https://www.babytuto.com/productos/,185591?bt_f=retailRocket'
-URL = 'https://www.babytuto.com/productos/paseo-sillas-para-auto-butacas,silla-combinada-modelo-nautilus-sully-graco,207205?bt_f=home-hot&gclid=Cj0KCQiAmKiQBhClARIsAKtSj-nBhf9ZfbjUR7mcGvHm5_gMQo_aOQHqx7dSFMS8zH1ZiikQR1DYDf8aAqCsEALw_wcB'
-URL = 'https://www.babytuto.com/productos/,185155?bt_f=retailRocket'
-URL = 'https://www.babytuto.com/productos/,198977?bt_f=retailRocket'
-#URL = 'https://www.babytuto.com/productos/libros-infantiles-libros-paternidad,libro-recetas-para-mi-bebe,164360?bt_f=home-trending'
-URL = 'https://www.babytuto.com/productos/,13680?bt_f=retailRocket'
-from requests_html import HTMLSession
-s = HTMLSession()
-response = s.get(URL)
-response.html.render(timeout=20)
 
-print(response)
-URLS.append(URL)
+workbook = xlrd.open_workbook("links.xlsx","rb")
+sheets = workbook.sheet_names()
+productos_link = []
+for sheet_name in sheets:
+    sh = workbook.sheet_by_name(sheet_name)
+    for rownum in range(sh.nrows):
+        row_valaues = sh.row_values(rownum)
+        productos_link.append(row_valaues[1])
 
-#r = requests.get(URL)
-#html=r.text
-html = response.html.html
-soup = BeautifulSoup(html, 'html.parser')
-
-
-
-
-# Check container of product
-try:
-    soup.find('div', {'id': 'product-information'})
-    print(f'[bold green] ✔ [/bold green] Existe contenedor [bold green] Success [/bold green]')
-except NoSuchElementException:
-    print(f'[bold red] x [/bold red] No existe contenedor [bold red] Failed [/bold red]')
-
-
-
-try:
-    nombre = soup.select('#product-information .title')[0].text
-    NOMBRES.append(nombre)
-    print(f'[bold green] ✔ [/bold green] Existe nombre [bold green] Success [/bold green]')
-except NoSuchElementException:
-    NOMBRES.append(0)
-    print(f'[bold red] x [/bold red] No existe nombre [bold red] Failed [/bold red]')
-
-
-
-try:
-    marca = soup.select('#product-information .merchant-name')[0].text
-    MARCAS.append(marca)
-    print(f'[bold green] ✔ [/bold green] Existe marca [bold green] Success [/bold green]')
-except NoSuchElementException:
-    MARCAS.append(0)
-    print(f'[bold red] x [/bold red] No existe marca [bold red] Failed [/bold red]')
-
-
-
-if checkElement(soup.select('.ts-reviews-count')) > 0:
-    valoracion = soup.select('.ts-reviews-count')[0].text
-    VALORACIONES.append(valoracion)
-    print(f'[bold green] ✔ [/bold green] Existe valoraciones [bold green] Success [/bold green]')
-else:
-    VALORACIONES.append(0)
-    print(f'[bold red] x [/bold red] No existe valoraciones [bold red] Failed [/bold red]')
-
-try: 
-    precionormal = soup.select('#product-information .original')[0].text
-    PRECIOS.append(precionormal)
-    print(f'[bold green] ✔ [/bold green] Existe precionormal [bold green] Success [/bold green]')
-except NoSuchElementException:
-    PRECIOS.append(0)
-    print(f'[bold red] x [/bold red] No existe precionormal [bold red] Failed [/bold red]')
-
-
-try: 
-    preciooferta = soup.select('#product-information .final')[0].text
-    PRECIOOFERTA.append(preciooferta)
-    print(f'[bold green] ✔ [/bold green] Existe preciooferta [bold green] Success [/bold green]')
-except NoSuchElementException:
-    PRECIOOFERTA.append(0)
-    print(f'[bold red] x [/bold red] No existe preciooferta [bold red] Failed [/bold red]')
-
-
-try: 
-    description = soup.select('#product-information .subtitle')[0].text
-    DESCRIPTION.append(description)
-    print(f'[bold green] ✔ [/bold green] Existe description [bold green] Success [/bold green]')
-except NoSuchElementException:
-    DESCRIPTION.append(0)
-    print(f'[bold red] x [/bold red] No existe description [bold red] Failed [/bold red]')
-
-
-
-try: 
-    despachogratis = soup.select('#product-information .free-shipping')[0].text
-    DESPACHOGRATIS.append(despachogratis)
-    print(f'[bold green] ✔ [/bold green] Existe despachogratis [bold green] Success [/bold green]')
-except NoSuchElementException:
-    DESPACHOGRATIS.append(0)
-    print(f'[bold red] x [/bold red] No existe despachogratis [bold red] Failed [/bold red]')
-
-
-
-# TAGBABYFLASH
-if checkElement(soup.select('.tags a')) > 0:
-    TAGBABYFLASH.append(1)
-    print(f'[bold green] ✔ [/bold green] Existe tagbestseller [bold green] Success [/bold green]')
-else:
-    TAGBABYFLASH.append(0)
-    print(f'[bold red] x [/bold red] No existe tagbestseller [bold red] Failed [/bold red]')
-
-#TAGBESTSELLER
-if checkElement(soup.select('.tags .tag')) > 0:
-    if len(soup.select('.tags img')) == 2:
-        image = soup.select('.tags img')[1]['src']
-        TAGBESTSELLER.append(1)
+def insert_links(links):
+    cursor = db.cursor()
+    cursor.execute('SELECT id_links FROM links')
+    data = cursor.fetchall()
+    cursor.close()
+  
+    if len(data) == len(links):
+        print('[bold red] Links ya insertados [/bold red]')
+     
     else:
-        TAGBESTSELLER.append(0) 
-else:
-    TAGBESTSELLER.append(0)
-    print(f'[bold red] x [/bold red] No existe tagbestseller [bold red] Failed [/bold red]')
+        f.taskStatus(task='Insertando links en la base de datos', limit=5)
+        for link in range(len(data), len(links)):
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO links (links, id_links) VALUES (%s, %s)", (productos_link[link], link))
+            db.commit()
+            cursor.close()
+        
+
+insert_links(productos_link)
 
 
 
 
-if checkElement(soup.select('.span5.buy .info .table')) > 0:
-    STOCKONLINE.append(soup.select('.span5.buy .info .table tbody tr:nth-child(1) td:nth-child(2)')[0].text)
-    print(f'[bold green] ✔ [/bold green] Existe Stock online [bold green] Success [/bold green]')
-else:
-    STOCKONLINE.append(0)
-    print(f'[bold red] x [/bold red] No existe stock online [bold red] Failed [/bold red]')
+cursor = db.cursor()
+cursor.execute('SELECT * FROM productos')
+data = cursor.fetchall()
+cursor.close()
+
+print('Hay un total de productos: ' + str(len(data)))
+
+for i in range(len(data), len(productos_link)):
+    print(f'[bold green] ✔ [/bold green] Escaneando URL: ' + str(i) + ' Link: ' + productos_link[i] + ' [bold green] Success [/bold green]')
+    #URL = 'https://www.babytuto.com/productos/libros-infantiles-libros-paternidad,libro-recetas-para-mi-bebe,164360?bt_f=home-trending'
+    URL = productos_link[i]
+    from requests_html import HTMLSession
+    s = HTMLSession()
+    response = s.get(URL)
+    response.html.render(timeout=50)
+
+    print(response)
+    URLS.append(URL)
+
+    #r = requests.get(URL)
+    #html=r.text
+    html = response.html.html
+    soup = BeautifulSoup(html, 'html.parser')
 
 
-if checkElement(soup.select('.span5.buy .info .table')) > 0:
-    STOCKBODEGA.append(soup.select('.span5.buy .info .table tbody tr:nth-child(2) td:nth-child(2)')[0].text)
-    print(f'[bold green] ✔ [/bold green] Existe Stock bodega [bold green] Success [/bold green]')
-else:
-    STOCKBODEGA.append(0)
-    print(f'[bold red] x [/bold red] No existe stock bodega [bold red] Failed [/bold red]')
+
+    if checkElement(soup.select('.not-available-other')) > 0:
+        print(f'[bold red] x [/bold red] Producto no disponible [bold red] Failed [/bold red]')
+        #NOMBRES.append(0)
+        #URLS.append(0)
+        #DESCRIPTION.append(0)
+        #MARCAS.append(0)
+        #PRECIOS.append(0)
+        #PRECIOOFERTA.append(0)
+        #CATEGORIA.append(0)
+        #VALORACIONES.append(0)
+        #STOCKONLINE.append(0)
+        #STOCKBODEGA.append(0)
+        #IMAGENPRINCIPAL.append(0)
+        #IMAGENES.append(0)
+        #TAGBABYFLASH.append(0)
+        #TAGBESTSELLER.append(0)
+        #DESPACHOGRATIS.append(0)
+        try:
+            nombre = soup.select('#product-information .title')[0].text
+            #NOMBRES.append(nombre)
+            print(f'[bold green] ✔ [/bold green] Existe nombre [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            #NOMBRES.append(0)
+            nombre = 0
+            print(f'[bold red] x [/bold red] No existe nombre [bold red] Failed [/bold red]')
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO productos (nombre, marca, descripcion, valoraciones, scrap_id, url, producto_activo) VALUES (%s, %s, %s, %s, %s, %s, %s)", (nombre, 0, 0, 0, i, productos_link[i], 0))
+        db.commit()
+        cursor.close()
+    else:
+        # Check container of product
+
+
+        
+      
+        
+       
+
+        try:
+            soup.find('div', {'id': 'product-information'})
+            print(f'[bold green] ✔ [/bold green] Existe contenedor [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            print(f'[bold red] x [/bold red] No existe contenedor [bold red] Failed [/bold red]')
+
+
+
+        try:
+            nombre = soup.select('#product-information .title')[0].text
+            #NOMBRES.append(nombre)
+            print(f'[bold green] ✔ [/bold green] Existe nombre [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            #NOMBRES.append(0)
+            nombre = 0
+            print(f'[bold red] x [/bold red] No existe nombre [bold red] Failed [/bold red]')
+
+
+
+        try:
+            marca = soup.select('#product-information .merchant-name')[0].text
+            #MARCAS.append(marca)
+            print(f'[bold green] ✔ [/bold green] Existe marca [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            #MARCAS.append(0)
+            marca = 0
+            print(f'[bold red] x [/bold red] No existe marca [bold red] Failed [/bold red]')
+
+
+
+        if checkElement(soup.select('.ts-reviews-count')) > 0:
+            valoracion = soup.select('.ts-reviews-count')[0].text
+            #VALORACIONES.append(valoracion)
+            print(f'[bold green] ✔ [/bold green] Existe valoraciones [bold green] Success [/bold green]')
+        else:
+            #VALORACIONES.append(0)
+            valoracion = 0
+            print(f'[bold red] x [/bold red] No existe valoraciones [bold red] Failed [/bold red]')
+
+        try: 
+            precionormal = soup.select('#product-information .original')[0].text
+            if precionormal == '':
+                #PRECIOS.append(0)
+                precionormal = 0
+            else:
+                precionormal = soup.select('#product-information .original')[0].text
+                #PRECIOS.append(precionormal)
+            print(f'[bold green] ✔ [/bold green] Existe precionormal [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            #PRECIOS.append(0)
+            precionormal = 0
+            print(f'[bold red] x [/bold red] No existe precionormal [bold red] Failed [/bold red]')
+
+
+        try: 
+            preciooferta = soup.select('#product-information .final')[0].text
+            #PRECIOOFERTA.append(preciooferta)
+            print(f'[bold green] ✔ [/bold green] Existe preciooferta [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            #PRECIOOFERTA.append(0)
+            preciooferta = 0
+            print(f'[bold red] x [/bold red] No existe preciooferta [bold red] Failed [/bold red]')
+
+
+        try: 
+            description = soup.select('#product-information .subtitle')[0].text
+            #DESCRIPTION.append(description)
+            print(f'[bold green] ✔ [/bold green] Existe description [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            #DESCRIPTION.append(0)
+            description = 0
+            print(f'[bold red] x [/bold red] No existe description [bold red] Failed [/bold red]')
+
+
+
+        try: 
+            despachogratis = soup.select('#product-information .free-shipping')[0].text
+            #DESPACHOGRATIS.append(despachogratis)
+            print(f'[bold green] ✔ [/bold green] Existe despachogratis [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            #DESPACHOGRATIS.append(0)
+            despachogratis = 0
+            print(f'[bold red] x [/bold red] No existe despachogratis [bold red] Failed [/bold red]')
+
+
+        try: 
+            imagenprincipal = soup.select('.zoom-elv')[0]['src']
+            #IMAGENPRINCIPAL.append(imagenprincipal)
+            print(f'[bold green] ✔ [/bold green] Existe imagen principal [bold green] Success [/bold green]')
+        except NoSuchElementException:
+            #IMAGENPRINCIPAL.append(0)
+            imagenprincipal = 0
+            print(f'[bold red] x [/bold red] No existe imagen principal [bold red] Failed [/bold red]')
+
+
+
+        
+
+        # TAGBABYFLASH
+        if checkElement(soup.select('.tags a')) > 0:
+            #TAGBABYFLASH.append(1)
+            tagbabyflash = 1
+            print(f'[bold green] ✔ [/bold green] Existe tagbabyflash [bold green] Success [/bold green]')
+        else:
+            #TAGBABYFLASH.append(0)
+            tagbabyflash = 0
+            print(f'[bold red] x [/bold red] No existe tagbabyflash [bold red] Failed [/bold red]')
+
+        #TAGBESTSELLER
+        if checkElement(soup.select('.tags .tag')) > 0:
+            if len(soup.select('.tags img')) == 2:
+                image = soup.select('.tags img')[1]['src']
+                #TAGBESTSELLER.append(1)
+                tagbestseller = 1
+            else:
+                #TAGBESTSELLER.append(0) 
+                tagbestseller = 0
+        else:
+            #TAGBESTSELLER.append(0)
+            tagbestseller = 0
+            print(f'[bold red] x [/bold red] No existe tagbestseller [bold red] Failed [/bold red]')
+
+        categorias = soup.select('.product .breadcrumb')[0].text
+        breadcrumbs = ''
+        for ul in categorias:
+            for li in ul:
+                breadcrumbs += li
+
+        categoria_principal =  soup.select('.product .breadcrumb li:last-child a')[0].text
+        #CATEGORIA_PRINCIPAL.append(categoria_principal)
+
+
+        if checkElement(soup.select('.span5.buy .info .table')) > 0:
+            #STOCKONLINE.append(soup.select('.span5.buy .info .table tbody tr:nth-child(1) td:nth-child(2)')[0].text)
+            stockonline = soup.select('.span5.buy .info .table tbody tr:nth-child(1) td:nth-child(2)')[0].text
+            print(f'[bold green] ✔ [/bold green] Existe Stock online [bold green] Success [/bold green]')
+        else:
+            #STOCKONLINE.append(0)
+            stockonline = 0
+            print(f'[bold red] x [/bold red] No existe stock online [bold red] Failed [/bold red]')
+
+
+        if checkElement(soup.select('.span5.buy .info .table')) > 0:
+            #STOCKBODEGA.append(soup.select('.span5.buy .info .table tbody tr:nth-child(2) td:nth-child(2)')[0].text)
+            stockbodega = soup.select('.span5.buy .info .table tbody tr:nth-child(2) td:nth-child(2)')[0].text
+            print(f'[bold green] ✔ [/bold green] Existe Stock bodega [bold green] Success [/bold green]')
+        else:
+            #STOCKBODEGA.append(0)
+            stockbodega = 0
+            print(f'[bold red] x [/bold red] No existe stock bodega [bold red] Failed [/bold red]')
+
+
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO productos (nombre, marca, descripcion, valoraciones, breadcrumb, categoria_principal, imagenprincipal, precionormal, preciooferta, tagbabyflash, tagbestseller, stockonline, stockbodega, scrap_id, url, producto_activo) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (nombre, marca, description, valoracion, breadcrumbs, categoria_principal, imagenprincipal, precionormal, preciooferta, tagbabyflash, tagbestseller, stockonline, stockbodega, i, productos_link[i], 1))
+        db.commit()
+        cursor.close()
 
 
 
@@ -198,20 +316,3 @@ else:
 
 
 
-
-
-print(NOMBRES)
-print(URLS)
-print(DESCRIPTION)
-print(MARCAS)
-print(PRECIOS)
-print(PRECIOOFERTA)
-print(CATEGORIA)
-print(VALORACIONES)
-print(STOCKONLINE)
-print(STOCKBODEGA)
-print(IMAGENPRINCIPAL)
-print(IMAGENES)
-print(TAGBABYFLASH)
-print(TAGBESTSELLER) 
-print(DESPACHOGRATIS) 
