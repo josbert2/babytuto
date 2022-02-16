@@ -103,7 +103,7 @@ for i in range(len(data), len(productos_link)):
     from requests_html import HTMLSession
     s = HTMLSession()
     response = s.get(URL)
-    response.html.render(timeout=50)
+    response.html.render(timeout=550)
     #s.close()
     #response.close()
 
@@ -138,6 +138,11 @@ for i in range(len(data), len(productos_link)):
         if len(soup.select('.not-available-other')) == 1:
             nombre = soup.select('#product-information .title')[0].text
             print(f'[bold green] ✔ [/bold green] Existe nombre [bold green] Success [/bold green]')
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO productos (nombre, marca, descripcion, valoraciones, scrap_id, url, producto_activo) VALUES (%s, %s, %s, %s, %s, %s, %s)", (nombre, 0, 0, 0, i, productos_link[i], 0))
+            db.commit()
+            cursor.close()
+            print('no paso')
         else:
             print('paso')
         
@@ -221,6 +226,7 @@ for i in range(len(data), len(productos_link)):
 
             try: 
                 despachogratis = soup.select('#product-information .free-shipping')[0].text
+                despachogratis = 1
                 #DESPACHOGRATIS.append(despachogratis)
                 print(f'[bold green] ✔ [/bold green] Existe despachogratis [bold green] Success [/bold green]')
             except NoSuchElementException:
@@ -271,6 +277,8 @@ for i in range(len(data), len(productos_link)):
             for ul in categorias:
                 for li in ul:
                     breadcrumbs += li
+            print(breadcrumbs)
+          
 
             categoria_principal =  soup.select('.product .breadcrumb li:last-child a')[0].text
             #CATEGORIA_PRINCIPAL.append(categoria_principal)
@@ -297,7 +305,7 @@ for i in range(len(data), len(productos_link)):
 
 
             cursor = db.cursor()
-            cursor.execute("INSERT INTO productos (nombre, marca, descripcion, valoraciones, breadcrumb, categoria_principal, imagenprincipal, precionormal, preciooferta, tagbabyflash, tagbestseller, stockonline, stockbodega, scrap_id, url, producto_activo) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (nombre, marca, description, valoracion, breadcrumbs, categoria_principal, imagenprincipal, precionormal, preciooferta, tagbabyflash, tagbestseller, stockonline, stockbodega, i, productos_link[i], 1))
+            cursor.execute("INSERT INTO productos (nombre, marca, descripcion, valoraciones, despachogratis, breadcrumb, categoria_principal, imagenprincipal, precionormal, preciooferta, tagbabyflash, tagbestseller, stockonline, stockbodega, scrap_id, url, producto_activo) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (nombre, marca, description, valoracion, despachogratis, breadcrumbs, categoria_principal, imagenprincipal, precionormal, preciooferta, tagbabyflash, tagbestseller, stockonline, stockbodega, i, productos_link[i], 1))
             db.commit()
             cursor.close()
 
